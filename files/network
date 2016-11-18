@@ -73,6 +73,17 @@ for lif in $ifaces; do
 
   /etc/rc.d/netif restart $lif
 
+  if [ -n "$ip" ]; then
+    /bin/rm -f /etc/dhclient.conf
+    (
+      cat <<EOT
+send host-name "$SET_HOSTNAME";
+send dhcp-requested-address $ip;
+EOT
+    ) > /etc/dhclient.conf
+      /sbin/dhclient -c /etc/dhclient.conf $lif
+  fi
+
   n=`expr $n + 1`
 done
 
