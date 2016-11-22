@@ -5,7 +5,7 @@ PATH=/bin:/sbin:/usr/bin:/usr/sbin
 rootfqdev=`mount | grep "on / " | cut -f1 -d ' '`
 rootdev=`gpart show | grep "GPT" | cut -f4 -w`
 
-gpart recover $rootdev
+
 gpart resize -i 2 -a 4k $rootdev
 
 growfs -y $rootfqdev

@@ -45,6 +45,11 @@ for lif in $ifaces; do
   sed -i '' -e "/^ifconfig_${lif}=/d"      /etc/rc.conf
   sed -i '' -e "/^ifconfig_${lif}_ipv6=/d" /etc/rc.conf
 
+  if [ -n "$SET_HOSTNAME" ]; then
+      sed -i '' "s/^hostname=.*/hostname=\"$SET_HOSTNAME\"/g" /etc/rc.conf
+      hostname "$SET_HOSTNAME"
+  fi
+
   if [ -z "$ipv6" -o -n "$context_force_ipv4" ]; then
     printf "ifconfig_%s=\"inet %s netmask %s\"\n" \
       "$lif" "${ip:-$failback_ip}" "${mask:-$failback_mask}" >> /etc/rc.conf
@@ -71,22 +76,12 @@ for lif in $ifaces; do
     fi
   fi
 
-  /etc/rc.d/netif restart $lif
+  dhcpcd -r "$ip" -h "$SET_HOSTNAME" $lif
 
-  if [ -n "$ip" ]; then
-    /bin/rm -f /etc/dhclient.conf
-    (
-      cat <<EOT
-send host-name "$SET_HOSTNAME";
-send dhcp-requested-address $ip;
-EOT
-    ) > /etc/dhclient.conf
-      /sbin/dhclient -c /etc/dhclient.conf $lif
-  fi
+  /etc/rc.d/netif restart $lif
 
   n=`expr $n + 1`
 done
 
 /etc/rc.d/routing restart
-
 exit 0
